@@ -7,6 +7,7 @@
  * 
  * Contributors:
  *   Martin Lippert            initial implementation     
+ *   Philip Graf               find extension definition id even if it is not a direct parent
  *******************************************************************************/
 package org.eclipse.springframework.util;
 
@@ -92,13 +93,29 @@ public class SpringExtensionFactory implements IExecutableExtensionFactory,
 		}
 
 		// try the id of the extension element itself
-		if (config.getParent() != null
-				&& config.getParent() instanceof IExtension) {
-			IExtension extensionDefinition = (IExtension) config.getParent();
+		IExtension extensionDefinition = getExtensionDefinition(config);
+		if (extensionDefinition != null) {
 			return extensionDefinition.getSimpleIdentifier();
 		}
 
 		return null;
+	}
+	
+	private IExtension getExtensionDefinition(IConfigurationElement config) {
+		Object parent = config.getParent();
+		IExtension extensionDefinition;
+		
+		if (parent instanceof IExtension) {
+			extensionDefinition = (IExtension) parent;
+			
+		} else if (parent instanceof IConfigurationElement){
+			extensionDefinition = getExtensionDefinition(((IConfigurationElement) parent));
+			
+		} else {
+			extensionDefinition = null;
+		}
+		
+		return extensionDefinition;
 	}
 
 	private ApplicationContext getApplicationContext(
